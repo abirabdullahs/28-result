@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radiance Result Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f1f4ef;--paper:#fafbf8;--ink:#16211d;--muted:#5b6a62;--line:#c9d2cb;
+    --accent:#c4286a;--on-accent:#fff;--err:#b3261e;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0f1613;--paper:#161f1a;--ink:#e9efea;--muted:#93a39a;--line:#2d3b33;
+    --accent:#ff7aa8;--on-accent:#1b0a12;--err:#ff8a80;
+  }}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;font-family:'Hind Siliguri',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;line-height:1.55}
+  :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+
+  .page{max-width:760px;margin:0 auto;padding:0 20px}
+
+  .top{border-bottom:1px solid var(--line)}
+  .top .page{display:flex;align-items:center;gap:14px;padding-top:18px;padding-bottom:18px}
+  .logo{display:grid;grid-template-rows:auto 1fr;width:46px;height:46px;padding:3px 5px;border:2px solid var(--ink);border-radius:3px;
+    font-family:'Archivo',sans-serif;line-height:1}
+  .logo small{font-size:.55rem;font-weight:500;color:var(--muted)}
+  .logo b{align-self:end;font-size:1.35rem;font-weight:800;letter-spacing:-.5px}
+  .brand strong{display:block;font-family:'Archivo',sans-serif;font-size:1.25rem;font-weight:800;line-height:1.1}
+  .brand span{font-size:.85rem;color:var(--muted)}
+
+  h1{margin:44px 0 6px;font-size:clamp(1.9rem,6.5vw,2.8rem);line-height:1.2;font-weight:700;letter-spacing:-.3px}
+  .lead{margin:0 0 34px;color:var(--muted)}
+
+  label{display:block;font-weight:600;margin-bottom:6px}
+  .row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+  input{flex:1 1 240px;min-width:0;padding:10px 0;font:inherit;font-family:'Archivo','Hind Siliguri',sans-serif;font-size:1.5rem;font-weight:500;
+    font-variant-numeric:tabular-nums;letter-spacing:1px;color:var(--ink);background:transparent;border:0;border-bottom:2px solid var(--ink);border-radius:0;outline:none}
+  input::placeholder{color:var(--line);opacity:1}
+  input:focus{border-bottom-color:var(--accent)}
+  button{padding:13px 26px;font:inherit;font-weight:700;color:var(--paper);background:var(--ink);border:2px solid var(--ink);border-radius:3px;cursor:pointer}
+  button:hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+  #status{min-height:1.6em;margin-top:10px;color:var(--err);font-weight:500}
+
+  #result{display:none;margin-top:30px;padding-top:30px;border-top:2px solid var(--ink)}
+  #result h3{margin:0;font-size:clamp(1.7rem,5.5vw,2.3rem);line-height:1.2;font-weight:700}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 36px;margin:14px 0 0}
+  .meta div{min-width:0}
+  .meta dt{font-size:.82rem;color:var(--muted)}
+  .meta dd{margin:0;font-weight:500;font-variant-numeric:tabular-nums}
+
+  .tiles{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-top:28px}
+  .tile{display:flex;flex-direction:column;min-height:170px;padding:12px 14px;border:2px solid var(--ink);border-radius:3px;background:var(--paper)}
+  .tile small{font-size:.88rem;color:var(--muted)}
+  .tile .big{margin-top:auto;font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(3.6rem,15vw,5.6rem);line-height:.9;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+  .tile .big em{font-style:normal;font-weight:500;font-size:1.05rem;letter-spacing:0;color:var(--muted);margin-left:6px}
+  .tile.top{background:var(--accent);border-color:var(--accent)}
+  .tile.top small,.tile.top .big,.tile.top .big em{color:var(--on-accent)}
+
+  .scale{margin-top:22px}
+  .track{height:10px;background:var(--line)}
+  #bar{height:100%;width:0;background:var(--accent);transition:width 1s cubic-bezier(.2,.7,.2,1)}
+  .ticks{height:9px;border-right:1px solid var(--ink);
+    background:repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px calc(100%/11)) bottom/100% 100% no-repeat,
+               repeating-linear-gradient(90deg,var(--muted) 0 1px,transparent 1px calc(100%/55)) bottom/100% 45% no-repeat}
+  .ends{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  .pdfhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin:36px 0 10px}
+  .pdfhead b{font-size:1.15rem}
+  .links a{margin-left:18px;font-weight:600;color:var(--ink);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+  .links a:hover{color:var(--accent)}
+  iframe{display:block;width:100%;height:80vh;border:2px solid var(--ink);border-radius:3px;background:#fff}
+  .note{margin:48px 0 0;padding:18px 0 28px;border-top:1px solid var(--line);font-size:.82rem;color:var(--muted)}
+  @media(max-width:480px){.tiles{grid-template-columns:1fr 1fr}.links a{margin:0 16px 0 0}.pdfhead{flex-direction:column}}
+  @media(prefers-reduced-motion:reduce){#bar{transition:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="page">
+    <div class="logo" aria-hidden="true"><small>88</small><b>Ra</b></div>
+    <div class="brand"><strong>Radiance</strong><span>Academic &amp; Admission Care</span></div>
+  </div>
+</header>
+
+<main class="page">
+  <h1>পরিবেশ রসায়ন : উইকলী এক্সাম ০১</h1>
+  <p class="lead">Result Portal</p>
+
+  <label for="num">Enter your contact number</label>
+  <div class="row">
+    <input id="num" type="tel" inputmode="numeric" placeholder="01XXXXXXXXX" autocomplete="off">
+    <button id="btn">View result</button>
+  </div>
+  <div id="status" role="status"></div>
+
+  <section id="result">
+    <h3 id="nm"></h3>
+    <dl class="meta">
+      <div><dt>College</dt><dd id="cl"></dd></div>
+      <div><dt>Contact</dt><dd id="ph"></dd></div>
+    </dl>
+
+    <div class="tiles">
+      <div class="tile">
+        <small>Obtained Mark</small>
+        <div class="big"><span id="mk"></span><em>/ 55</em></div>
+      </div>
+      <div class="tile" id="tileMerit">
+        <small>Merit Position</small>
+        <div class="big"><span id="mr"></span><em id="mrOf"></em></div>
+      </div>
+    </div>
+    <div class="scale" aria-hidden="true">
+      <div class="track"><div id="bar"></div></div>
+      <div class="ticks"></div>
+      <div class="ends"><span>0</span><span>55</span></div>
+    </div>
+
+    <div class="pdfhead">
+      <b>Answer Script</b>
+      <div class="links"><a id="open" target="_blank" rel="noopener">Open</a><a id="dl" target="_blank" rel="noopener">Download</a></div>
+    </div>
+    <iframe id="frame" allow="autoplay" title="Answer Script"></iframe>
+  </section>
+
+  <p class="note">© Radiance Academic &amp; Admission Care</p>
+</main>
+
+<script>
+const TOTAL = 55;
+/* contact number -> student data + Drive file id */
+const DATA = {
+  "01842815936": {name:"Safi Khan",          college:"SSAC",        marks:37, id:"1F0X_NTZNmT4SgFzJXajeHs2thIPpBtdH"},
+  "01752444992": {name:"Evan Islam",         college:"BAFSK",       marks:32, id:"1EiAinwI9EuHh-I4GZtDuBp8kkVanQjWY"},
+  "01648377872": {name:"Mahbuba",            college:"SSAC",        marks:24, id:"1ibuk0CGfbsZizZhi_W9vWqBfY5Kz3DMR"},
+  "01982353104": {name:"Oishi",              college:"GCC",         marks:43, id:"1phKFNE0JCntA6Q1WhCNaOdXZ852HmGv1"},
+  "01778425325": {name:"Arshy",              college:"SSAC",        marks:36, id:"1bva3wz4MrkjGxx5YTbIh_XJMTVOsC9dW"},
+  "01648492609": {name:"Shammi",             college:"Uttara High", marks:30, id:"1MzGOojHFJoCtChmSP1oR1JLmZRDgy-Cm"},
+  "01996202426": {name:"রোদমীলা মেহজাবিন",    college:"Tongi Govt",  marks:28, id:"1_HkmGyNOUztgUdocUNjPChqRURF7ynkW"},
+  "01720224289": {name:"Najmun Nahar",       college:"SSAC",        marks:34, id:"1Eb7OoIH2z_8lU9D6LKWCsdBDHphg6KWt"},
+  "01943579106": {name:"Tasmia Tasnim",      college:"Shaheed Ramiz Uddin Cantonment College", marks:29, id:"1L4erE2xjbPTX0Vj6o9pPd3Nzl3djxDta"},
+  "01921744004": {name:"Payel Sarker",       college:"SSAC",        marks:42, id:"18OSick15c-rp67vSZUqysfGzG28yLToo"}
+};
+
+/* merit auto: marks beshi = merit bhalo, same marks = same merit */
+const sorted = Object.values(DATA).map(d => d.marks).sort((a,b) => b - a);
+Object.values(DATA).forEach(d => d.merit = sorted.indexOf(d.marks) + 1);
+const COUNT = sorted.length;
+
+const $ = id => document.getElementById(id);
+function normalize(s){
+  s = s.replace(/[০-৯]/g, d => "০১২৩৪৫৬৭৮৯".indexOf(d)).replace(/\D/g, "");
+  if (s.startsWith("880")) s = s.slice(2);
+  if (s.length === 10 && s[0] === "1") s = "0" + s;
+  return s;
+}
+
+function go(){
+  const num = normalize($("num").value);
+  const d = DATA[num];
+  $("result").style.display = "none"; $("frame").src = "about:blank"; $("bar").style.width = "0";
+  if (!d){
+    $("status").textContent = num.length < 11 ? "সঠিক ১১ ডিজিটের contact number দিন।" : "এই নম্বরের কোনো result পাওয়া যায়নি।";
+    return;
+  }
+  $("status").textContent = "";
+  $("nm").textContent = d.name;
+  $("cl").textContent = d.college;
+  $("ph").textContent = num;
+  $("mk").textContent = d.marks;
+  $("mr").textContent = d.merit;
+  $("mrOf").textContent = "/ " + COUNT;
+  $("tileMerit").classList.toggle("top", d.merit <= 3);
+  $("frame").src = "https://drive.google.com/file/d/" + d.id + "/preview";
+  $("open").href = "https://drive.google.com/file/d/" + d.id + "/view";
+  $("dl").href = "https://drive.google.com/uc?export=download&id=" + d.id;
+  $("result").style.display = "block";
+  setTimeout(() => { $("bar").style.width = (d.marks / TOTAL * 100) + "%"; }, 80);
+  $("result").scrollIntoView({behavior:"smooth", block:"start"});
+}
+$("btn").addEventListener("click", go);
+$("num").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+</script>
+</body>
+</html>
